@@ -1,0 +1,63 @@
+# predictive_model/staffing_forecast_model.py
+
+import pandas as pd
+from statsmodels.tsa.arima.model import ARIMA
+import matplotlib.pyplot as plt
+
+# --- 1. Load Sample Data ---
+# In a real project, this data would come from the Alteryx workflow or a database.
+# Here, we create a sample DataFrame to simulate historical staffing demand.
+print("Creating sample historical staffing data...")
+data = {
+    'date': pd.to_datetime(['2025-05-01', '2025-05-02', '2025-05-03', '2025-05-04', '2025-05-05',
+                           '2025-05-06', '2025-05-07', '2025-05-08', '2025-05-09', '2025-05-10',
+                           '2025-05-11', '2025-05-12', '2025-05-13', '2025-05-14', '2025-05-15']),
+    'required_crew': [250, 255, 260, 258, 252, 270, 275, 272, 265, 260, 280, 285, 283, 278, 270]
+}
+df = pd.DataFrame(data)
+df.set_index('date', inplace=True)
+
+print("Sample Data:")
+print(df.head())
+print("-" * 30)
+
+
+# --- 2. Build and Train the Forecast Model ---
+# We use a simple ARIMA model, a common choice for time-series forecasting.
+# The (p,d,q) order is a simple starting point.
+print("Training the ARIMA forecasting model...")
+model = ARIMA(df['required_crew'], order=(5, 1, 0))
+model_fit = model.fit()
+print("Model training complete.")
+print("-" * 30)
+
+
+# --- 3. Generate a Forecast ---
+# We will forecast the next 14 days of required crew members.
+print("Generating forecast for the next 14 days...")
+forecast_steps = 14
+forecast = model_fit.forecast(steps=forecast_steps)
+
+# Create a DataFrame for the forecast results
+forecast_dates = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=forecast_steps)
+forecast_df = pd.DataFrame({'date': forecast_dates, 'forecasted_crew': forecast})
+forecast_df.set_index('date', inplace=True)
+
+print("Forecast Results:")
+print(forecast_df)
+print("-" * 30)
+
+
+# --- 4. Visualize the Results (Optional) ---
+# This helps to visually confirm that the forecast follows the historical trend.
+print("Generating plot of history and forecast...")
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['required_crew'], label='Historical Demand')
+plt.plot(forecast_df.index, forecast_df['forecasted_crew'], label='Forecasted Demand', color='red')
+plt.title('Crew Staffing Demand: History and 14-Day Forecast')
+plt.xlabel('Date')
+plt.ylabel('Required Crew Members')
+plt.legend()
+plt.grid(True)
+plt.savefig('staffing_forecast_plot.png') # Saves the plot as an image
+print("Plot saved as staffing_forecast_plot.png")
