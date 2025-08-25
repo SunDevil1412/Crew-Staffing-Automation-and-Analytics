@@ -1,0 +1,32 @@
+-- SCRIPT TO EXTRACT DATA FOR CREW STAFFING ANALYSIS
+
+-- Query 1: Get Flight Requirements from Operations Database
+-- This query pulls all scheduled flights for the next 90 days and the required crew for each.
+SELECT
+    flight_date,
+    flight_number,
+    required_pilots,
+    required_flight_attendants
+FROM flight_schedules
+WHERE flight_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY);
+
+
+-- Query 2: Get Active Crew Roster from HR Database
+-- This query retrieves the current list of all active crew members, their role, and their base.
+SELECT
+    employee_id,
+    crew_type, -- 'Pilot' or 'Flight Attendant'
+    base_location,
+    status
+FROM crew_roster
+WHERE status = 'Active';
+
+-- Query 3: Get Crew on Leave or in Training
+-- This query identifies crew who are not available for flight duty.
+SELECT
+    employee_id,
+    start_date,
+    end_date,
+    activity_type -- 'Leave', 'Training', 'Sick'
+FROM crew_unavailability
+WHERE end_date >= CURDATE();
